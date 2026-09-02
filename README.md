@@ -110,7 +110,7 @@ az login
 
 # 2. (Optional) Copy and edit variable overrides
 cp terraform.tfvars.example terraform.tfvars
-#    At minimum, set allowed_ssh_source to your public IP.
+#    SSH is disabled by default; set allowed_ssh_source to your IP to enable it.
 
 # 3. Initialise providers and modules
 terraform init
@@ -143,7 +143,7 @@ of them in `terraform.tfvars`.
 | `vm_size` | `Standard_B1s` | VM size (small, free-tier-eligible for one VM) |
 | `admin_username` | `azureadmin` | Admin user created on both VMs |
 | `ssh_public_key_path` | `~/.ssh/id_rsa.pub` | Public key placed on the VMs |
-| `allowed_ssh_source` | `*` | CIDR allowed to reach SSH — **restrict this** |
+| `allowed_ssh_source` | `""` (SSH disabled) | CIDR allowed to reach SSH; set to your IP to enable. `*` is rejected |
 | `startup_time` | `08:00` | Daily power-up (Central Time) |
 | `shutdown_time` | `22:00` | Daily deallocate (Central Time) |
 | `safety_shutdown_time` | `2230` | Native auto-shutdown safety net (HHmm) |
@@ -187,8 +187,10 @@ lowering the total further.
 
 ## Security
 
-- **Restrict SSH.** `allowed_ssh_source` defaults to `*` (open to the internet).
-  Set it to your public IP (`curl -s ifconfig.me` → `x.x.x.x/32`) before applying.
+- **SSH is disabled by default.** `allowed_ssh_source` defaults to `""`, so no
+  inbound SSH rule is created at all. To enable SSH, set it to your public IP
+  (`curl -s ifconfig.me` → `x.x.x.x/32`). A validation rule rejects `*` (open to
+  the internet).
 - VMs use **SSH key authentication only** (no passwords).
 - The Automation identity is scoped to **`Virtual Machine Contributor` on its own
   resource group** — least privilege for start/stop.

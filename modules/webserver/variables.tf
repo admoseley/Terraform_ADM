@@ -39,8 +39,13 @@ variable "ssh_public_key_path" {
 }
 
 variable "allowed_ssh_source" {
-  description = "CIDR allowed to reach SSH (port 22)."
+  description = "CIDR allowed to reach SSH (port 22). Empty string means SSH is disabled (no rule created)."
   type        = string
+
+  validation {
+    condition     = var.allowed_ssh_source != "*"
+    error_message = "allowed_ssh_source must not be \"*\" (open to the internet). Use a specific CIDR like 203.0.113.4/32, or \"\" to disable SSH."
+  }
 }
 
 variable "custom_data_b64" {
