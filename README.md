@@ -161,6 +161,47 @@ of them in `terraform.tfvars`.
 
 ---
 
+## CI/CD
+
+Two GitHub Actions workflows enforce the pipeline (see also `CONTRIBUTING.md`):
+
+- **`terraform-ci.yml`** (every PR): `fmt`, `validate`, `tflint`, and a blocking
+  **Checkov** security scan. No cloud access.
+- **`terraform-deploy.yml`**: `terraform plan` on PRs (posted as a comment) and
+  `terraform apply` on merge to `main`, **gated behind the `production`
+  environment's manual approval** (the sign-off). Auth is via **GitHub OIDC
+  federation** — no secrets stored.
+
+### One-time OIDC + environment setup
+
+An Azure AD app (`github-terraform-adm`) provides the deploy identity. Complete
+the setup with the helpers in `scripts/oidc/`:
+
+```bash
+APP_ID=<app registration client id>
+SUB_ID=<subscription id>
+
+# Service principal + federated credentials (no secrets)
+az ad sp create --id "$APP_ID"
+az ad app federated-credential create --id "$APP_ID" --parameters @scripts/oidc/fedcred-pr.json
+az ad app federated-credential create --id "$APP_ID" --parameters @scripts/oidc/fedcred-env.json
+
+# Deploy permission (creates/manages resource groups)
+az role assignment create --assignee "$APP_ID" --role Contributor --scope "/subscriptions/$SUB_ID"
+
+# GitHub repo variables (IDs, not secrets) + SSH public key for the VMs
+gh variable set AZURE_CLIENT_ID --body "$APP_ID"
+gh variable set AZURE_TENANT_ID --body "<tenant id>"
+gh variable set AZURE_SUBSCRIPTION_ID --body "$SUB_ID"
+gh variable set SSH_PUBLIC_KEY --body "$(cat ~/.ssh/id_rsa.pub)"
+
+# Production environment with a required reviewer (the sign-off gate)
+gh api -X PUT repos/admoseley/Terraform_ADM/environments/production --input scripts/oidc/environment-production.json
+```
+
+The deploy workflow's jobs stay dormant (skipped) until `AZURE_CLIENT_ID` and
+`SSH_PUBLIC_KEY` are set, so nothing runs before setup is complete.
+
 ## Cost
 
 | Item | Approx. monthly |

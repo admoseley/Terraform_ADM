@@ -1,0 +1,113 @@
+# ---------------------------------------------------------------------------
+# Terraform Deploy — the "push to Azure" half of the pipeline.
+#
+#   - Pull request  -> terraform plan, posted as a PR comment (read-only).
+#   - Merge to main -> terraform apply, GATED behind the `production`
+#                      environment's manual approval (your sign-off).
+#
+# Auth is via GitHub OIDC federation — no secrets stored. The jobs stay dormant
+# (skipped) until the required repo variables are set, so this workflow won't
+# fail before the Azure identity is configured.
+#
+# Required repo variables (Settings -> Secrets and variables -> Actions -> Variables):
+#   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, SSH_PUBLIC_KEY
+# ---------------------------------------------------------------------------
+name: Terraform Deploy
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write # required for OIDC federation
+  contents: read
+  pull-requests: write # to post the plan comment
+
+env:
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+concurrency:
+  group: terraform-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan
+    # Dormant until the Azure identity + SSH key variables exist.
+    if: ${{ vars.AZURE_CLIENT_ID != '' && vars.SSH_PUBLIC_KEY != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.0"
+
+      # The VM requires an SSH public key; write the one from repo variables to
+      # the default path the config expects.
+      - name: Provide SSH public key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ vars.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform plan
+        id: plan
+        run: |
+          set +e
+          terraform plan -input=false -no-color -out=tfplan
+          echo "exit=$?" >> "$GITHUB_OUTPUT"
+          terraform show -no-color tfplan > plan.txt
+
+      - name: Comment plan on PR
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo '### Terraform Plan'
+            echo '```'
+            head -c 60000 plan.txt
+            echo ''
+            echo '```'
+          } > comment.md
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file comment.md
+
+      - name: Fail if plan errored
+        if: ${{ steps.plan.outputs.exit != '0' }}
+        run: exit 1
+
+  apply:
+    name: Apply (gated)
+    if: ${{ github.event_name == 'push' && vars.AZURE_CLIENT_ID != '' && vars.SSH_PUBLIC_KEY != '' }}
+    needs: plan
+    runs-on: ubuntu-latest
+    # The `production` environment carries the required-reviewer rule — this is
+    # the manual sign-off gate. apply does not run until it is approved.
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.0"
+
+      - name: Provide SSH public key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ vars.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform apply
+        run: terraform apply -input=false -auto-approve
