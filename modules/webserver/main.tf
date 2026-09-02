@@ -133,6 +133,11 @@ resource "azurerm_linux_virtual_machine" "web" {
   network_interface_ids = [azurerm_network_interface.web.id]
   tags                  = var.tags
 
+  # Hardening (Checkov CKV_AZURE_50): we provision via cloud-init (custom_data),
+  # not Azure VM extensions, so disable extension operations to reduce the
+  # attack surface.
+  allow_extension_operations = false
+
   admin_ssh_key {
     username   = var.admin_username
     public_key = file(var.ssh_public_key_path)
@@ -164,6 +169,11 @@ resource "azurerm_automation_account" "this" {
   resource_group_name = azurerm_resource_group.this.name
   sku_name            = "Basic"
   tags                = var.tags
+
+  # Hardening (Checkov CKV2_AZURE_24): our scheduled cloud runbooks start/stop
+  # the VM via the managed identity calling Azure Resource Manager (outbound),
+  # so no inbound public access to the automation account is needed.
+  public_network_access_enabled = false
 
   identity {
     type = "SystemAssigned"
