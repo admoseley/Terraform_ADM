@@ -1,0 +1,6 @@
+{
+  "name": "github-pull-request",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:admoseley/Terraform_ADM:pull_request",
+  "audiences": ["api://AzureADTokenExchange"]
+}
