@@ -69,17 +69,17 @@ jobs:
 
       # Scans all Terraform for Azure security misconfigurations.
       #
-      # ROLLOUT: soft_fail is TRUE for now (report-only) so we can establish a
-      # baseline without blocking the pipeline's own introduction. Findings are
-      # tracked as follow-up issues; once addressed, flip soft_fail to false to
-      # make security failures block merges. Suppress an accepted finding inline
-      # with `# checkov:skip=CKV_AZURE_XXX: <reason>`.
+      # ENFORCING: soft_fail is false, so any unresolved finding blocks the PR.
+      # The baseline has been cleared — real issues fixed, and the two
+      # deliberate findings (HTTP :80, public IP for Traffic Manager) suppressed
+      # inline with justifications. Suppress a newly-accepted finding with
+      # `# checkov:skip=CKV_AZURE_XXX: <reason>` inside the resource block.
       - name: Checkov
         uses: bridgecrewio/checkov-action@v12
         with:
           directory: .
           framework: terraform
           quiet: true
-          soft_fail: true
+          soft_fail: false
           output_format: cli
           download_external_modules: false
