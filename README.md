@@ -59,7 +59,6 @@ VM has its own public IP.
 ├── main.tf                     # Calls the webserver module twice (central + east)
 ├── trafficmanager.tf           # Global round-robin load balancing
 ├── outputs.tf                  # URLs, public IPs, SSH commands
-├── cloud-init.yaml             # First-boot provisioning (installs nginx)
 ├── terraform.tfvars.example    # Copy to terraform.tfvars and customise
 ├── scripts/
 │   └── bootstrap-state.sh      # One-time setup of the state storage account
@@ -67,7 +66,9 @@ VM has its own public IP.
     └── webserver/              # One reusable "region stack"
         ├── main.tf             # RG, network, NSG, VM, power schedules, safety net
         ├── variables.tf        # Module inputs
-        └── outputs.tf          # Module outputs
+        ├── outputs.tf          # Module outputs
+        └── templates/
+            └── cloud-init.yaml.tftpl  # Per-server nginx page (installs nginx)
 ```
 
 The **`webserver` module** encapsulates one complete regional stack (resource

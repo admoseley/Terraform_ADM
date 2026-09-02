@@ -1,8 +1,3 @@
-# cloud-init is shared by both stacks.
-locals {
-  custom_data_b64 = base64encode(file("${path.module}/cloud-init.yaml"))
-}
-
 # ---------------------------------------------------------------------------
 # Central US stack
 # ---------------------------------------------------------------------------
@@ -20,7 +15,9 @@ module "central" {
   admin_username      = var.admin_username
   ssh_public_key_path = var.ssh_public_key_path
   allowed_ssh_source  = var.allowed_ssh_source
-  custom_data_b64     = local.custom_data_b64
+
+  server_label        = "Server A"
+  server_accent_color = "#1e6fd9" # blue
 
   schedule_utc_offset  = var.schedule_utc_offset
   startup_time         = var.startup_time
@@ -47,7 +44,9 @@ module "east" {
   admin_username      = var.admin_username
   ssh_public_key_path = var.ssh_public_key_path
   allowed_ssh_source  = var.allowed_ssh_source
-  custom_data_b64     = local.custom_data_b64
+
+  server_label        = "Server B"
+  server_accent_color = "#22a06b" # green
 
   schedule_utc_offset  = var.schedule_utc_offset
   startup_time         = var.startup_time
