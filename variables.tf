@@ -19,9 +19,14 @@ variable "ssh_public_key_path" {
 }
 
 variable "allowed_ssh_source" {
-  description = "CIDR allowed to reach SSH (port 22). Set to your public IP for safety, e.g. 203.0.113.4/32."
+  description = "CIDR allowed to reach SSH (port 22). Empty (default) disables SSH entirely — no rule is created. Set to your public IP to enable it, e.g. 203.0.113.4/32."
   type        = string
-  default     = "*"
+  default     = ""
+
+  validation {
+    condition     = var.allowed_ssh_source != "*"
+    error_message = "allowed_ssh_source must not be \"*\" (open to the internet). Use a specific CIDR like 203.0.113.4/32, or \"\" to disable SSH."
+  }
 }
 
 variable "schedule_utc_offset" {

@@ -12,9 +12,11 @@
 # Admin username created on both VMs.
 # admin_username = "azureadmin"
 
-# --- SECURITY: restrict SSH ---------------------------------------------------
-# By default SSH (port 22) is open to the entire internet ("*"). Lock it down to
-# your own public IP. Find it with: curl -s ifconfig.me
+# --- SECURITY: SSH access -----------------------------------------------------
+# SSH (port 22) is DISABLED by default (empty string = no rule created).
+# To enable it, set this to your own public IP only. Find it with:
+#   curl -s ifconfig.me
+# Using "*" (open to the internet) is rejected by a validation rule.
 # allowed_ssh_source = "203.0.113.4/32"
 
 # VM size. Standard_B1s is small, cheap, and Azure-free-tier eligible for one VM.
