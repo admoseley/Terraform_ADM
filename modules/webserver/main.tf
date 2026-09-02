@@ -70,16 +70,23 @@ resource "azurerm_network_security_group" "web" {
     destination_address_prefix = "*"
   }
 
-  security_rule {
-    name                       = "AllowSSH"
-    priority                   = 120
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = var.allowed_ssh_source
-    destination_address_prefix = "*"
+  # SSH is CLOSED by default. A rule is created only when allowed_ssh_source is
+  # set to a real CIDR (e.g. your admin IP). Leaving it empty means no inbound
+  # SSH rule exists at all — the most restrictive posture, and it keeps
+  # Checkov CKV_AZURE_10 (no SSH from the internet) green.
+  dynamic "security_rule" {
+    for_each = var.allowed_ssh_source == "" ? [] : [1]
+    content {
+      name                       = "AllowSSH"
+      priority                   = 120
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = "22"
+      source_address_prefix      = var.allowed_ssh_source
+      destination_address_prefix = "*"
+    }
   }
 }
 
