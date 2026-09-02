@@ -1,0 +1,40 @@
+# ---------------------------------------------------------------------------
+# Terraform
+# ---------------------------------------------------------------------------
+
+# Local provider plugins, modules, and CLI working files
+.terraform/
+.terraform.tfstate.lock.info
+
+# State files — may contain secrets; never commit. Use remote state instead.
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Variable files that may hold sensitive values (keys, IPs, secrets).
+# The committed *.example templates are safe; real ones are ignored.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# CLI override files (used for local, machine-specific overrides)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Plan output artifacts
+*.tfplan
+tfplan
+
+# ---------------------------------------------------------------------------
+# Editor / OS
+# ---------------------------------------------------------------------------
+.DS_Store
+*.swp
+.idea/
+.vscode/

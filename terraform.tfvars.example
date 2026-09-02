@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------------------
+# Example variable overrides.
+#
+# Copy this file to `terraform.tfvars` (which is git-ignored) and edit the
+# values you want to change. Anything you leave out falls back to the defaults
+# defined in variables.tf.
+# ---------------------------------------------------------------------------
+
+# Path to the SSH public key placed on both VMs for login.
+# ssh_public_key_path = "~/.ssh/id_rsa.pub"
+
+# Admin username created on both VMs.
+# admin_username = "azureadmin"
+
+# --- SECURITY: restrict SSH ---------------------------------------------------
+# By default SSH (port 22) is open to the entire internet ("*"). Lock it down to
+# your own public IP. Find it with: curl -s ifconfig.me
+# allowed_ssh_source = "203.0.113.4/32"
+
+# VM size. Standard_B1s is small, cheap, and Azure-free-tier eligible for one VM.
+# vm_size = "Standard_B1s"
+
+# --- Power schedule (Central Time) --------------------------------------------
+# startup_time         = "08:00"   # daily power-up
+# shutdown_time        = "22:00"   # daily deallocate (compute billing stops)
+# safety_shutdown_time = "2230"    # native auto-shutdown safety net (HHmm)
+
+# UTC offset that anchors the FIRST scheduled run. Chicago is -05:00 during CDT
+# (Mar-Nov) and -06:00 during CST. Ongoing DST is handled by the America/Chicago
+# timezone on the schedule; this only affects the first run.
+# schedule_utc_offset = "-05:00"
+
+# Global-unique DNS label for the Traffic Manager profile. Must be unique across
+# ALL of Azure -> resolves to <name>.trafficmanager.net
+# traffic_manager_dns_name = "moseley-dev-web"
+
+# Tags applied to every resource.
+# tags = {
+#   environment = "development"
+#   owner       = "Moseley"
+#   managed_by  = "terraform"
+# }
