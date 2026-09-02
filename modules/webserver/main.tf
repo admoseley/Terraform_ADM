@@ -141,8 +141,10 @@ resource "azurerm_linux_virtual_machine" "web" {
   allow_extension_operations = false
 
   admin_ssh_key {
-    username   = var.admin_username
-    public_key = file(var.ssh_public_key_path)
+    username = var.admin_username
+    # pathexpand() resolves a leading "~" to the home directory; Terraform's
+    # file() does not expand "~" on its own.
+    public_key = file(pathexpand(var.ssh_public_key_path))
   }
 
   os_disk {
