@@ -54,12 +54,15 @@ VM has its own public IP.
 ```
 .
 ├── versions.tf                 # Terraform + azurerm provider version pins
+├── backend.tf                  # Remote state backend (Azure Storage)
 ├── variables.tf                # Shared input variables (defaults live here)
 ├── main.tf                     # Calls the webserver module twice (central + east)
 ├── trafficmanager.tf           # Global round-robin load balancing
 ├── outputs.tf                  # URLs, public IPs, SSH commands
 ├── cloud-init.yaml             # First-boot provisioning (installs nginx)
 ├── terraform.tfvars.example    # Copy to terraform.tfvars and customise
+├── scripts/
+│   └── bootstrap-state.sh      # One-time setup of the state storage account
 └── modules/
     └── webserver/              # One reusable "region stack"
         ├── main.tf             # RG, network, NSG, VM, power schedules, safety net
@@ -108,17 +111,22 @@ safety net.
 # 1. Authenticate to Azure
 az login
 
-# 2. (Optional) Copy and edit variable overrides
+# 2. (First time only) Bootstrap the remote state backend.
+#    Creates the state storage account, then set its name in backend.tf.
+#    Skip if the storage account in backend.tf already exists.
+./scripts/bootstrap-state.sh
+
+# 3. (Optional) Copy and edit variable overrides
 cp terraform.tfvars.example terraform.tfvars
 #    SSH is disabled by default; set allowed_ssh_source to your IP to enable it.
 
-# 3. Initialise providers and modules
+# 4. Initialise providers and the remote backend
 terraform init
 
-# 4. Review the plan
+# 5. Review the plan
 terraform plan
 
-# 5. Apply
+# 6. Apply
 terraform apply
 ```
 
@@ -195,4 +203,8 @@ lowering the total further.
 - The Automation identity is scoped to **`Virtual Machine Contributor` on its own
   resource group** — least privilege for start/stop.
 - **Never commit `terraform.tfvars` or state files** — both are git-ignored, as
-  state can contain secrets. Use a remote backend for team use.
+  state can contain secrets.
+- **State lives in a remote Azure Storage backend** (`backend.tf`), hardened with
+  TLS 1.2, HTTPS-only, no anonymous access, and blob versioning + 30-day soft
+  delete. The backend provides automatic state locking; no access key is stored
+  in the repo (Terraform fetches it at runtime from your Azure credentials).
