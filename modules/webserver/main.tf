@@ -41,6 +41,7 @@ resource "azurerm_subnet" "web" {
 # Network Security Group: allow HTTP, HTTPS, and (restricted) SSH
 # ---------------------------------------------------------------------------
 resource "azurerm_network_security_group" "web" {
+  # checkov:skip=CKV_AZURE_160: This is a public webserver; HTTP :80 is intentionally open to the internet (redirects to HTTPS in a real deployment).
   name                = "nsg-${var.name}-web"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
@@ -108,6 +109,7 @@ resource "azurerm_public_ip" "web" {
 }
 
 resource "azurerm_network_interface" "web" {
+  # checkov:skip=CKV_AZURE_119: A public IP on the NIC is required by design — Traffic Manager is DNS-based and hands clients each VM's own public IP to connect to directly.
   name                = "nic-${var.name}-web"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
