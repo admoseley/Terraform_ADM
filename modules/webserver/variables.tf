@@ -48,9 +48,15 @@ variable "allowed_ssh_source" {
   }
 }
 
-variable "custom_data_b64" {
-  description = "Base64-encoded cloud-init for first-boot provisioning."
+variable "server_label" {
+  description = "Human-friendly server identity shown on the welcome page (e.g. \"Server A\")."
   type        = string
+}
+
+variable "server_accent_color" {
+  description = "CSS background color for the welcome page, to visually distinguish servers."
+  type        = string
+  default     = "#1e6fd9"
 }
 
 variable "schedule_utc_offset" {

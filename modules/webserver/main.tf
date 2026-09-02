@@ -161,7 +161,12 @@ resource "azurerm_linux_virtual_machine" "web" {
     version   = "latest"
   }
 
-  custom_data = var.custom_data_b64
+  # Render per-server cloud-init so each region serves its own identity page.
+  custom_data = base64encode(templatefile("${path.module}/templates/cloud-init.yaml.tftpl", {
+    server_label = var.server_label
+    region       = var.location
+    accent_color = var.server_accent_color
+  }))
 }
 
 # ---------------------------------------------------------------------------
